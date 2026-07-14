@@ -1,0 +1,6 @@
+{
+  "name": "Pondasi.ai",
+  "description": "AI-powered geospatial construction and architectural planning platform for Indonesia analyzing land conditions, flood risks, and generating digital twin visualizations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
