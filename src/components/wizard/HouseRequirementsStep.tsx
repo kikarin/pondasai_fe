@@ -3,7 +3,7 @@ import { Users, LayoutDashboard, Home, DollarSign, Layers3 } from 'lucide-react'
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
 
 export function HouseRequirementsStep() {
-  const { requirements, setHouseRequirements, runAnalysisPipeline, analysisError, isPending, dimensions, polygonGeoJson } =
+  const { requirements, setHouseRequirements, runDesignAnalysis, analysisError, isPending, dimensions, polygonGeoJson } =
     usePondasiWorkspace();
 
   const landAreaFromPolygon = (() => {
@@ -25,7 +25,7 @@ export function HouseRequirementsStep() {
   }, [maxFloorsAllowed, requirements.floors, setHouseRequirements]);
 
   const handleNext = () => {
-    void runAnalysisPipeline();
+    void runDesignAnalysis();
   };
 
   const isValid =
@@ -43,7 +43,7 @@ export function HouseRequirementsStep() {
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight">Kebutuhan Rumah</h2>
           <p className="text-xs text-gray-400">
-            pondasai akan merekomendasikan struktur dan denah berdasarkan kebutuhan penghuni.
+            Rekomendasi struktur dan denah berdasarkan kebutuhan penghuni (analisis desain).
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export function HouseRequirementsStep() {
               <Layers3 className="w-4 h-4 text-purple-400" /> Jumlah Lantai
             </label>
             <p className="text-[10px] text-gray-500 font-mono">
-              Maks {maxFloorsAllowed} lantai untuk lahan ~{Math.round(landAreaFromPolygon) || '—'} m² (polygon Step 3)
+              Maks {maxFloorsAllowed} lantai untuk lahan ~{Math.round(landAreaFromPolygon) || '—'} m²
             </p>
             <div className="grid grid-cols-3 gap-2">
               {[1, 2, 3].map((floorCount) => (
@@ -127,7 +127,7 @@ export function HouseRequirementsStep() {
               className="w-full bg-[#141A2D] border border-[#23324E] focus:border-yellow-500 focus:outline-none px-4 py-3 rounded-lg text-white font-mono text-sm"
             />
             <p className="text-[10px] text-gray-500">
-              Budget memengaruhi coverage bangunan (luas footprint) saat analisis — estimasi deterministik, bukan harga kontraktor.
+              Budget memengaruhi coverage bangunan (luas footprint) saat analisis desain.
             </p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export function HouseRequirementsStep() {
             disabled={!isValid || isPending}
             className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition transform hover:-translate-y-0.5 uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            Mulai Analisis Lahan & Rekomendasi
+            Jalankan Analisis Desain
           </button>
         </div>
       </div>

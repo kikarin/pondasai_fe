@@ -1,10 +1,19 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
-import { ANALYSIS_LOADING_STEPS } from '../../hooks/usePondasiWorkspaceState';
+import {
+  DESIGN_LOADING_STEPS,
+  SITE_LOADING_STEPS,
+} from '../../hooks/usePondasiWorkspaceState';
 import { Loader2 } from 'lucide-react';
 
 export function LoadingOverlay() {
-  const { isPending, loadingStepIndex } = usePondasiWorkspace();
+  const { isPending, loadingStepIndex, loadingKind } = usePondasiWorkspace();
+
+  const steps = loadingKind === 'design' ? DESIGN_LOADING_STEPS : SITE_LOADING_STEPS;
+  const title =
+    loadingKind === 'design'
+      ? 'Menyusun konsep rumah'
+      : 'Menganalisis risiko lokasi';
 
   return (
     <AnimatePresence>
@@ -20,15 +29,15 @@ export function LoadingOverlay() {
             <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-2">Memproses Pipeline Analisis Backend</h2>
+          <h2 className="text-xl font-bold text-white mb-2">{title}</h2>
           <p className="text-blue-400 font-mono text-sm max-w-md text-center h-6">
-            {ANALYSIS_LOADING_STEPS[loadingStepIndex] || 'Menyelesaikan...'}
+            {steps[loadingStepIndex] || 'Menyelesaikan...'}
           </p>
 
           <div className="w-64 h-1.5 bg-[#1F293D] rounded-full mt-6 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
-              style={{ width: `${((loadingStepIndex + 1) / ANALYSIS_LOADING_STEPS.length) * 100}%` }}
+              style={{ width: `${((loadingStepIndex + 1) / steps.length) * 100}%` }}
             />
           </div>
         </motion.div>

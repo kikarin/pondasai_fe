@@ -22,6 +22,13 @@ import {
 } from 'lucide-react';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
 import { analyzeRisiko } from '../../services/analysisService';
+import { ScenarioVisualizationPanel } from './ScenarioVisualizationPanel';
+import { FunnelGate } from './FunnelGate';
+import { LocationReportDownload } from './LocationReportDownload';
+import {
+  buildEarthquakeScenarioInputs,
+  buildFloodScenarioInputs,
+} from '../../types/scenario';
 import type {
   BmkgEarthquakeEvent,
   ConfidenceResult,
@@ -30,6 +37,7 @@ import type {
   HazardEntry,
   HazardNarrative,
   HazardRisikoEntry,
+  LocationMitigationRecommendation,
   RiskEngineResult,
   RiskFactor,
   RisikoResponse,
@@ -1073,6 +1081,57 @@ const HazardNarrativeBlock: FC<{ hazardKey: string; narrative: HazardNarrative }
   );
 };
 
+function LocationMitigationPanel({ items }: { items: LocationMitigationRecommendation[] }) {
+  if (items.length === 0) return null;
+
+  const structural = items.filter((item) => !item.informational);
+  const informational = items.filter((item) => item.informational);
+  const ordered = [...structural, ...informational];
+
+  return (
+    <div className="rounded-2xl border border-[#1F293D] bg-[#0F1423] p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+          Mitigasi Lokasi
+        </h3>
+      </div>
+      <p className="text-[11px] text-gray-500 leading-relaxed">
+        Saran mitigasi dari Risk Engine untuk titik pin —{' '}
+        <span className="text-gray-400 font-semibold">bukan</span> rekomendasi denah/struktur desain
+        (itu muncul setelah konsep rumah).
+      </p>
+      <ul className="space-y-3">
+        {ordered.map((item) => {
+          const hazardLabel = HAZARD_META[item.sourceHazard]?.label ?? item.sourceHazard;
+          return (
+            <li
+              key={`${item.priority}-${item.sourceHazard}-${item.title}`}
+              className="rounded-xl border border-[#23324E] bg-[#0B0F1C] p-4 space-y-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-mono text-gray-500">#{item.priority}</span>
+                <span className="text-sm font-bold text-white">{item.title}</span>
+                {item.informational ? (
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-sky-300/90 bg-sky-500/10 border border-sky-500/25 px-1.5 py-0.5 rounded">
+                    Info
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.5 rounded">
+                    Mitigasi
+                  </span>
+                )}
+                <span className="text-[10px] text-gray-500">{hazardLabel}</span>
+              </div>
+              <p className="text-[12px] text-gray-300 leading-relaxed">{item.description}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function DisasterHistoryPanel({
   history,
   floodScore,
@@ -1120,10 +1179,58 @@ function DisasterHistoryPanel({
 }
 
 export function SiteAnalysisStep() {
-  const { siteAnalysis, nextStep, projectId } = usePondasiWorkspace();
+  const {
+    siteAnalysis,
+    projectId,
+    recommendations,
+    analysisError,
+    isPending,
+    runSiteAnalysis,
+    buildPathUnlocked,
+    finishRiskOnly,
+    unlockBuildPath,
+    locationName,
+  } = usePondasiWorkspace();
   const risiko = useRisiko(projectId);
+  const [finishedRiskOnly, setFinishedRiskOnly] = useState(false);
 
-  if (!siteAnalysis) return null;
+  const handleFinish = useCallback(() => {
+    setFinishedRiskOnly(true);
+    finishRiskOnly();
+  }, [finishRiskOnly]);
+
+  const handleContinue = useCallback(() => {
+    setFinishedRiskOnly(false);
+    unlockBuildPath();
+  }, [unlockBuildPath]);
+
+  if (!siteAnalysis) {
+    return (
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-lg mx-auto rounded-2xl border border-[#1F293D] bg-[#0F1423] p-6 space-y-4 text-center">
+          <h2 className="text-xl font-bold text-white">Analisis risiko lokasi</h2>
+          {isPending ? (
+            <p className="text-sm text-gray-400">Menunggu hasil analisis situs…</p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                {analysisError ||
+                  'Hasil risiko belum tersedia. Jalankan ulang analisis untuk lokasi yang dipilih.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => void runSiteAnalysis()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 transition"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Jalankan analisis risiko
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const history = siteAnalysis.disasterHistory;
   const overall = siteAnalysis.overallRiskScore;
@@ -1132,6 +1239,7 @@ export function SiteAnalysisStep() {
   const profile = siteAnalysis.siteProfile ?? engine?.siteProfile;
   const retryRequired = engine?.overall.retryRequired ?? false;
   const risikoMap: Record<string, HazardRisikoEntry> | undefined = risiko.data?.risiko;
+  const mitigationItems = engine?.recommendation ?? [];
 
   const suitabilityBannerClass =
     suitability?.level === 'tidak_disarankan'
@@ -1160,7 +1268,7 @@ export function SiteAnalysisStep() {
         <div className="bg-[#0F1423] border border-[#1F293D] p-6 rounded-2xl space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-white">Hasil Analisis Geospasial</h2>
+              <h2 className="text-xl font-bold text-white">Analisis risiko lokasi</h2>
               <p className="text-gray-400 text-sm">{siteAnalysis.locationName}</p>
 
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -1218,6 +1326,23 @@ export function SiteAnalysisStep() {
           ) : null}
         </div>
 
+        <FunnelGate
+          variant="compact"
+          buildPathUnlocked={buildPathUnlocked}
+          onFinish={handleFinish}
+          onContinue={handleContinue}
+        />
+
+        {finishedRiskOnly && !buildPathUnlocked ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+            <p className="text-[12px] text-emerald-200/90 leading-relaxed">
+              Selesai di cek risiko. Anda tidak dipaksa mengisi lahan — ubah pin di sidebar bila ingin
+              analisis lokasi lain, atau klik <span className="font-semibold">Lanjut konsep rumah</span>{' '}
+              kapan saja.
+            </p>
+          </div>
+        ) : null}
+
         {engine ? <SeverityChips severity={engine.severity} /> : null}
 
         {engine ? (
@@ -1252,6 +1377,19 @@ export function SiteAnalysisStep() {
             />
           </div>
         )}
+
+        {engine ? (
+          <ScenarioVisualizationPanel
+            floodInputs={buildFloodScenarioInputs(engine, recommendations)}
+            earthquakeInputs={buildEarthquakeScenarioInputs(
+              engine,
+              recommendations,
+              history?.bmkgEarthquakes?.length ?? null,
+            )}
+          />
+        ) : null}
+
+        {engine ? <LocationMitigationPanel items={mitigationItems} /> : null}
 
         {engine ? <DesignConsiderationsSection engine={engine} /> : null}
 
@@ -1315,14 +1453,15 @@ export function SiteAnalysisStep() {
           </p>
         </div>
 
-        <div className="flex justify-end pt-2">
-          <button
-            onClick={nextStep}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-900/30 transition"
-          >
-            Lanjut ke Rekomendasi Teknis
-          </button>
-        </div>
+        <FunnelGate
+          variant="full"
+          buildPathUnlocked={buildPathUnlocked}
+          onFinish={handleFinish}
+          onContinue={handleContinue}
+          locationPdf={
+            <LocationReportDownload locationName={locationName} siteAnalysis={siteAnalysis} />
+          }
+        />
       </div>
     </div>
   );

@@ -1,13 +1,45 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Box } from 'lucide-react';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
 import { BetaFeatureNotice } from './BetaFeatureNotice';
+import { DigitalTwinPanel } from './DigitalTwinPanel';
+import { SunlightAnalysisPanel } from './SunlightAnalysisPanel';
+import { VentilationAnalysisPanel } from './VentilationAnalysisPanel';
 import { getLayoutDimensions, getRoomColor } from '../../utils/floorPlan';
+import type { EarthquakeTwinVisual, FloodTwinVisual } from '../../types/digitalTwin';
+
+function addEdgeHighlight(
+  mesh: THREE.Mesh,
+  color: number,
+  group: THREE.Group,
+  disposables: THREE.BufferGeometry[],
+  materials: THREE.Material[],
+) {
+  const edges = new THREE.EdgesGeometry(mesh.geometry);
+  const lineMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 });
+  const lines = new THREE.LineSegments(edges, lineMat);
+  lines.position.copy(mesh.position);
+  lines.rotation.copy(mesh.rotation);
+  lines.scale.copy(mesh.scale);
+  group.add(lines);
+  disposables.push(edges);
+  materials.push(lineMat);
+}
 
 export function ThreeDPreviewStep() {
-  const { houseLayout, recommendations, nextStep } = usePondasiWorkspace();
+  const { houseLayout, recommendations, nextStep, coordinates, siteAnalysis } = usePondasiWorkspace();
   const mountRef = useRef<HTMLDivElement>(null);
+  const [floodVisual, setFloodVisual] = useState<FloodTwinVisual | null>(null);
+  const [eqVisual, setEqVisual] = useState<EarthquakeTwinVisual | null>(null);
+
+  const onFloodVisualChange = useCallback((visual: FloodTwinVisual) => {
+    setFloodVisual(visual);
+  }, []);
+
+  const onEarthquakeVisualChange = useCallback((visual: EarthquakeTwinVisual) => {
+    setEqVisual(visual);
+  }, []);
 
   useEffect(() => {
     if (!mountRef.current || !houseLayout) return;
@@ -60,11 +92,12 @@ export function ThreeDPreviewStep() {
     disposables.push(bodyGeo);
     materials.push(bodyMat);
 
+    let roof: THREE.Mesh | null = null;
     const roofType = houseLayout.roofType ?? 'limas';
     if (roofType === 'datar') {
       const roofGeo = new THREE.BoxGeometry(buildingWidth + 0.2, 0.2, buildingLength + 0.2);
       const roofMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
-      const roof = new THREE.Mesh(roofGeo, roofMat);
+      roof = new THREE.Mesh(roofGeo, roofMat);
       roof.position.set(0, floorElevationM + 0.3 + wallHeight + 0.1, 0);
       group.add(roof);
       disposables.push(roofGeo);
@@ -72,7 +105,7 @@ export function ThreeDPreviewStep() {
     } else {
       const roofGeo = new THREE.ConeGeometry(Math.max(buildingWidth, buildingLength) * 0.65, 1.8, 4);
       const roofMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
-      const roof = new THREE.Mesh(roofGeo, roofMat);
+      roof = new THREE.Mesh(roofGeo, roofMat);
       roof.position.set(0, floorElevationM + 0.3 + wallHeight + 0.9, 0);
       roof.rotation.y = Math.PI / 4;
       group.add(roof);
@@ -80,18 +113,102 @@ export function ThreeDPreviewStep() {
       materials.push(roofMat);
     }
 
+    if (eqVisual?.enabled) {
+      const tint = new THREE.Color(eqVisual.tint);
+      bodyMat.color.lerp(tint, 0.35);
+      bodyMat.emissive = tint;
+      bodyMat.emissiveIntensity = Math.min(0.35, eqVisual.shakeAmplitude * 2.5);
+
+      const focusColor = 0xf59e0b;
+      const recColor = 0x38bdf8;
+      const ids = new Set(eqVisual.highlightIds);
+
+      if (ids.has('confined_masonry')) {
+        addEdgeHighlight(body, focusColor, group, disposables, materials);
+      }
+      if (ids.has('foundation_tie')) {
+        addEdgeHighlight(foundation, focusColor, group, disposables, materials);
+      }
+      if (ids.has('ring_beam')) {
+        const beamGeo = new THREE.BoxGeometry(buildingWidth + 0.15, 0.12, buildingLength + 0.15);
+        const beamMat = new THREE.MeshLambertMaterial({
+          color: ids.has('ring_beam') ? focusColor : recColor,
+          transparent: true,
+          opacity: 0.85,
+        });
+        const beam = new THREE.Mesh(beamGeo, beamMat);
+        beam.position.set(0, floorElevationM + 0.3 + wallHeight - 0.05, 0);
+        group.add(beam);
+        disposables.push(beamGeo);
+        materials.push(beamMat);
+      }
+      if (ids.has('light_roof') && roof) {
+        addEdgeHighlight(roof, recColor, group, disposables, materials);
+      }
+    }
+
     scene.add(group);
-    renderer.render(scene, camera);
+
+    if (floodVisual?.enabled && floodVisual.waterHeightM > 0) {
+      const waterW = Math.max(buildingWidth, 4) * 2.4;
+      const waterL = Math.max(buildingLength, 4) * 2.4;
+      const waterH = Math.max(floodVisual.waterHeightM, 0.02);
+      const waterGeo = new THREE.BoxGeometry(waterW, waterH, waterL);
+      const waterMat = new THREE.MeshLambertMaterial({
+        color: new THREE.Color(floodVisual.color),
+        transparent: true,
+        opacity: floodVisual.opacity,
+        depthWrite: false,
+      });
+      const water = new THREE.Mesh(waterGeo, waterMat);
+      water.position.set(0, waterH / 2, 0);
+      scene.add(water);
+      disposables.push(waterGeo);
+      materials.push(waterMat);
+    }
+
+    let animId = 0;
+    let cancelled = false;
+    const amplitude = eqVisual?.enabled ? eqVisual.shakeAmplitude : 0;
+
+    const tick = (t: number) => {
+      if (cancelled) return;
+      if (amplitude > 0) {
+        group.position.x = Math.sin(t * 0.011) * amplitude;
+        group.position.z = Math.cos(t * 0.014) * amplitude * 0.65;
+        group.rotation.y = Math.sin(t * 0.008) * amplitude * 0.15;
+      } else {
+        group.position.x = 0;
+        group.position.z = 0;
+        group.rotation.y = 0;
+      }
+      renderer.render(scene, camera);
+      animId = requestAnimationFrame(tick);
+    };
+
+    if (amplitude > 0) {
+      animId = requestAnimationFrame(tick);
+    } else {
+      renderer.render(scene, camera);
+    }
 
     return () => {
+      cancelled = true;
+      if (animId) cancelAnimationFrame(animId);
       mountNode.removeChild(renderer.domElement);
       disposables.forEach((geometry) => geometry.dispose());
       materials.forEach((material) => material.dispose());
       renderer.dispose();
     };
-  }, [houseLayout, recommendations]);
+  }, [houseLayout, recommendations, floodVisual, eqVisual]);
 
   if (!houseLayout) return null;
+
+  const lat = siteAnalysis?.coordinates?.lat ?? coordinates?.lat ?? -6.2088;
+  const lng = siteAnalysis?.coordinates?.lng ?? coordinates?.lng ?? 106.8456;
+  const cuacaEkstremScore = siteAnalysis?.riskEngine?.hazards?.cuaca_ekstrem?.score ?? null;
+  const riskEngine = siteAnalysis?.riskEngine ?? null;
+  const bmkgEventCount = siteAnalysis?.disasterHistory?.bmkgEarthquakes?.length ?? null;
 
   return (
     <div className="flex-1 overflow-y-auto p-8 flex flex-col">
@@ -119,7 +236,29 @@ export function ThreeDPreviewStep() {
 
         <div className="flex-1 bg-[#0A0D15] border border-[#1F293D] rounded-2xl relative overflow-hidden min-h-[360px]">
           <div ref={mountRef} className="absolute inset-0" />
+          <div className="absolute bottom-3 left-3 right-3 pointer-events-none flex flex-wrap gap-2">
+            {floodVisual?.enabled ? (
+              <p className="text-[10px] font-mono text-sky-200/80 bg-[#0A0D15]/80 border border-sky-500/20 rounded-lg px-2 py-1">
+                Air twin {Math.round(floodVisual.waterHeightM * 100)} cm · {floodVisual.status}
+              </p>
+            ) : null}
+            {eqVisual?.enabled ? (
+              <p className="text-[10px] font-mono text-amber-200/80 bg-[#0A0D15]/80 border border-amber-500/20 rounded-lg px-2 py-1">
+                Goyang {eqVisual.shakeAmplitude.toFixed(2)} · highlight {eqVisual.highlightIds.length}
+              </p>
+            ) : null}
+          </div>
         </div>
+
+        {riskEngine ? (
+          <DigitalTwinPanel
+            riskEngine={riskEngine}
+            recommendations={recommendations}
+            bmkgEventCount={bmkgEventCount}
+            onFloodVisualChange={onFloodVisualChange}
+            onEarthquakeVisualChange={onEarthquakeVisualChange}
+          />
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           {houseLayout.rooms.map((room, index) => (
@@ -132,6 +271,19 @@ export function ThreeDPreviewStep() {
             </span>
           ))}
         </div>
+
+        <SunlightAnalysisPanel
+          latitude={lat}
+          longitude={lng}
+          landOutline={houseLayout.landOutline}
+        />
+
+        <VentilationAnalysisPanel
+          latitude={lat}
+          longitude={lng}
+          landOutline={houseLayout.landOutline}
+          cuacaEkstremScore={cuacaEkstremScore}
+        />
 
         <div className="flex justify-end pt-2 shrink-0">
           <button

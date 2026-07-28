@@ -11,10 +11,23 @@ import type {
 
 export const WIZARD_STEPS: StepId[] = [
   'CHOOSE_LOCATION',
+  'SITE_ANALYSIS',
   'INPUT_LAND_DIMENSIONS',
   'EDIT_POLYGON',
   'INPUT_REQUIREMENTS',
-  'SITE_ANALYSIS',
+  'RECOMMENDATIONS',
+  'FLOOR_PLAN',
+  'PREVIEW_3D',
+  'MATERIAL_LIST',
+  'PDF_REPORT',
+];
+
+export const FASE_A_STEPS: StepId[] = ['CHOOSE_LOCATION', 'SITE_ANALYSIS'];
+
+export const FASE_B_STEPS: StepId[] = [
+  'INPUT_LAND_DIMENSIONS',
+  'EDIT_POLYGON',
+  'INPUT_REQUIREMENTS',
   'RECOMMENDATIONS',
   'FLOOR_PLAN',
   'PREVIEW_3D',
@@ -34,6 +47,7 @@ export interface WizardValidationContext {
   recommendations: StructuralRecommendation | null;
   houseLayout: HouseLayout | null;
   materials: MaterialItem[];
+  buildPathUnlocked: boolean;
 }
 
 function hasPolygon(ctx: WizardValidationContext): boolean {
@@ -44,18 +58,22 @@ function hasPolygon(ctx: WizardValidationContext): boolean {
   return false;
 }
 
+export function isFaseBStep(step: StepId): boolean {
+  return FASE_B_STEPS.includes(step);
+}
+
 export function isStepComplete(step: StepId, ctx: WizardValidationContext): boolean {
   switch (step) {
     case 'CHOOSE_LOCATION':
       return Boolean(ctx.locationName.trim() && Number.isFinite(ctx.coordinates.lat) && Number.isFinite(ctx.coordinates.lng));
+    case 'SITE_ANALYSIS':
+      return Boolean(ctx.siteAnalysis);
     case 'INPUT_LAND_DIMENSIONS':
       return Boolean((ctx.dimensions.width && ctx.dimensions.length) || ctx.dimensions.area);
     case 'EDIT_POLYGON':
       return hasPolygon(ctx);
     case 'INPUT_REQUIREMENTS':
       return ctx.requirements.residents >= 1 && ctx.requirements.rooms >= 1 && ctx.requirements.floors >= 1;
-    case 'SITE_ANALYSIS':
-      return Boolean(ctx.siteAnalysis);
     case 'RECOMMENDATIONS':
       return Boolean(ctx.recommendations);
     case 'FLOOR_PLAN':
@@ -75,7 +93,15 @@ export function isStepAccessible(step: StepId, ctx: WizardValidationContext): bo
   const stepIndex = WIZARD_STEPS.indexOf(step);
   if (stepIndex < 0) return false;
 
-  if (stepIndex >= ANALYSIS_STEP_INDEX && !ctx.siteAnalysis) {
+  if (isFaseBStep(step) && !ctx.buildPathUnlocked) {
+    return false;
+  }
+
+  if (step === 'SITE_ANALYSIS') {
+    return isStepComplete('CHOOSE_LOCATION', ctx);
+  }
+
+  if (stepIndex > ANALYSIS_STEP_INDEX && !ctx.siteAnalysis) {
     return false;
   }
 
@@ -89,7 +115,7 @@ export function isStepAccessible(step: StepId, ctx: WizardValidationContext): bo
 }
 
 export function canProceedFromStep(step: StepId, ctx: WizardValidationContext): boolean {
-  if (step === 'INPUT_REQUIREMENTS' || step === 'CHOOSE_LOCATION') {
+  if (step === 'INPUT_REQUIREMENTS' || step === 'CHOOSE_LOCATION' || step === 'SITE_ANALYSIS') {
     return false;
   }
   return isStepComplete(step, ctx);

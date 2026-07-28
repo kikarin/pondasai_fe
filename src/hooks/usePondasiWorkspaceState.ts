@@ -9,25 +9,37 @@ import type {
   HouseLayout,
   MaterialItem,
 } from '../types';
+import type { EarthquakeMagnitudeScenario, FloodScenarioCm } from '../types/scenario';
 import { analyzeDesign, analyzeSite } from '../services/analysisService';
 import { reverseGeocode } from '../services/geocodeService';
 import { getProject, resetProject, updateProject } from '../services/projectService';
 import {
   WIZARD_STEPS,
   canProceedFromStep,
+  isFaseBStep,
   isStepAccessible,
   isStepComplete,
   type WizardValidationContext,
 } from '../utils/stepValidation';
+import { resolveResumeStep } from '../utils/funnelResume';
 
-export const ANALYSIS_LOADING_STEPS = [
-  'Menyimpan input proyek ke sistem...',
+export const SITE_LOADING_STEPS = [
+  'Menyimpan lokasi ke sistem...',
   'Mengambil elevasi, kemiringan, & jarak sungai...',
-  'Mengambil risiko banjir & gempa dari BNPB InaRISK...',
-  'Menjalankan rule engine struktur & generator denah/material...',
-  'Menyusun penjelasan AI json response (untuk narasi)...',
-  'Finalisasi hasil analisis geospasial...',
+  'Mengambil risiko multi-hazard dari BNPB InaRISK...',
+  'Menghitung skor & kelayakan lokasi...',
+  'Finalisasi analisis risiko lokasi...',
 ];
+
+export const DESIGN_LOADING_STEPS = [
+  'Menyimpan input lahan & kebutuhan...',
+  'Menjalankan rule engine struktur & elevasi...',
+  'Generator denah & daftar material...',
+  'Menyusun penjelasan AI (narasi)...',
+  'Finalisasi rekomendasi desain...',
+];
+
+export type AnalysisLoadingKind = 'site' | 'design';
 
 const DEFAULT_REQUIREMENTS: HouseRequirements = {
   residents: 4,
@@ -69,11 +81,9 @@ function hydrateProjectState(
     setHouseLayout: (value: HouseLayout | null) => void;
     setMaterialList: (value: MaterialItem[]) => void;
     setAiExplanation: (value: string) => void;
+    setBuildPathUnlocked: (value: boolean) => void;
   },
 ) {
-  if (project.currentStep) {
-    setters.setCurrentStep(project.currentStep as StepId);
-  }
   if (project.locationName) setters.setLocationName(project.locationName);
   if (project.coordinates) setters.setCoordinates(project.coordinates);
   if (project.dimensions) setters.setLandDimensions(project.dimensions);
@@ -84,6 +94,16 @@ function hydrateProjectState(
   if (project.houseLayout) setters.setHouseLayout(project.houseLayout);
   if (project.materials?.length) setters.setMaterialList(project.materials);
   if (project.aiExplanation) setters.setAiExplanation(project.aiExplanation);
+
+  const unlocked = Boolean(project.recommendations || project.houseLayout);
+  setters.setBuildPathUnlocked(unlocked);
+
+  const step = resolveResumeStep({
+    rawStep: project.currentStep,
+    hasSiteAnalysis: Boolean(project.siteAnalysis),
+    hasDesign: unlocked,
+  });
+  setters.setCurrentStep(step);
 }
 
 export function usePondasiWorkspaceState(projectId: string) {
@@ -101,19 +121,52 @@ export function usePondasiWorkspaceState(projectId: string) {
   const [houseLayout, setHouseLayout] = useState<HouseLayout | null>(null);
   const [materials, setMaterialList] = useState<MaterialItem[]>([]);
   const [aiExplanation, setAiExplanation] = useState<string>('');
+  const [twinFloodCm, setTwinFloodCm] = useState<FloodScenarioCm | null>(null);
+  const [twinMagnitude, setTwinMagnitude] = useState<EarthquakeMagnitudeScenario | null>(null);
+  const [buildPathUnlocked, setBuildPathUnlocked] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [loadingKind, setLoadingKind] = useState<AnalysisLoadingKind | null>(null);
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
-  const clearAnalysisResults = useCallback(() => {
-    setSiteAnalysis(null);
+  const clearDesignResults = useCallback(() => {
     setRecommendations(null);
     setHouseLayout(null);
     setMaterialList([]);
     setAiExplanation('');
-    setAnalysisError(null);
+    setTwinFloodCm(null);
+    setTwinMagnitude(null);
   }, []);
+
+  const clearAnalysisResults = useCallback(() => {
+    setSiteAnalysis(null);
+    clearDesignResults();
+    setAnalysisError(null);
+  }, [clearDesignResults]);
+
+  const setCoordinatesSafe = useCallback(
+    (value: Coordinates) => {
+      if (coordsRoughlyMatch(coordinates, value)) {
+        setCoordinates(value);
+        return;
+      }
+
+      setCoordinates(value);
+      setBuildPathUnlocked(false);
+      clearDesignResults();
+
+      if (siteAnalysis && !coordsRoughlyMatch(siteAnalysis.coordinates, value)) {
+        setSiteAnalysis(null);
+        setAnalysisError(null);
+      }
+
+      if (isFaseBStep(currentStep)) {
+        setCurrentStep('CHOOSE_LOCATION');
+      }
+    },
+    [coordinates, siteAnalysis, clearDesignResults, currentStep],
+  );
 
   const validationContext = useMemo<WizardValidationContext>(
     () => ({
@@ -126,6 +179,7 @@ export function usePondasiWorkspaceState(projectId: string) {
       recommendations,
       houseLayout,
       materials,
+      buildPathUnlocked,
     }),
     [
       locationName,
@@ -137,6 +191,7 @@ export function usePondasiWorkspaceState(projectId: string) {
       recommendations,
       houseLayout,
       materials,
+      buildPathUnlocked,
     ],
   );
 
@@ -161,6 +216,7 @@ export function usePondasiWorkspaceState(projectId: string) {
           setHouseLayout,
           setMaterialList,
           setAiExplanation,
+          setBuildPathUnlocked,
         });
       } catch (error) {
         console.error('Gagal memuat proyek dari backend', error);
@@ -200,9 +256,42 @@ export function usePondasiWorkspaceState(projectId: string) {
       const data = await analyzeSite(projectId);
       setSiteAnalysis(data.siteAnalysis);
     } catch (error) {
-      console.warn('Prefetch site analysis gagal (akan dicoba ulang di Step 4)', error);
+      console.warn('Prefetch site analysis gagal (akan dicoba ulang di hasil risiko)', error);
     }
   }, [projectId]);
+
+  const runSiteAnalysis = useCallback(async () => {
+    if (isSiteAnalysisFresh(siteAnalysis, coordinates)) {
+      return;
+    }
+
+    setAnalysisError(null);
+    setLoadingKind('site');
+    setIsPending(true);
+    setLoadingStepIndex(0);
+
+    let progressTimer: ReturnType<typeof setInterval> | null = null;
+
+    try {
+      progressTimer = setInterval(() => {
+        setLoadingStepIndex((prev) => Math.min(prev + 1, SITE_LOADING_STEPS.length - 2));
+      }, 1200);
+
+      setLoadingStepIndex(1);
+      const data = await analyzeSite(projectId);
+      setSiteAnalysis(data.siteAnalysis);
+      setLoadingStepIndex(SITE_LOADING_STEPS.length - 1);
+    } catch (error) {
+      console.error('Gagal menjalankan analisis situs', error);
+      setAnalysisError(error instanceof Error ? error.message : 'Analisis risiko lokasi gagal');
+    } finally {
+      if (progressTimer) clearInterval(progressTimer);
+      setTimeout(() => {
+        setIsPending(false);
+        setLoadingKind(null);
+      }, 400);
+    }
+  }, [projectId, siteAnalysis, coordinates]);
 
   const confirmChooseLocation = useCallback(async () => {
     let resolvedName =
@@ -214,17 +303,62 @@ export function usePondasiWorkspaceState(projectId: string) {
         resolvedName = rev.name.trim();
       }
     } catch {
-      // Tetap pakai nama terakhir atau fallback koordinat.
     }
 
     setLocationName(resolvedName);
 
-    const next: StepId = 'INPUT_LAND_DIMENSIONS';
+    const siteFresh = isSiteAnalysisFresh(siteAnalysis, coordinates);
+    if (!siteFresh) {
+      setBuildPathUnlocked(false);
+      clearDesignResults();
+      setSiteAnalysis(null);
+      setAnalysisError(null);
+    }
+
+    const next: StepId = 'SITE_ANALYSIS';
     setCurrentStep(next);
-    clearAnalysisResults();
     await syncProject(next, { locationName: resolvedName, coordinates });
-    void prefetchSiteAnalysis();
-  }, [coordinates, locationName, syncProject, prefetchSiteAnalysis, clearAnalysisResults, setLocationName]);
+
+    if (siteFresh) {
+      return;
+    }
+
+    setAnalysisError(null);
+    setLoadingKind('site');
+    setIsPending(true);
+    setLoadingStepIndex(0);
+
+    let progressTimer: ReturnType<typeof setInterval> | null = null;
+
+    try {
+      progressTimer = setInterval(() => {
+        setLoadingStepIndex((prev) => Math.min(prev + 1, SITE_LOADING_STEPS.length - 2));
+      }, 1200);
+
+      setLoadingStepIndex(1);
+      const data = await analyzeSite(projectId);
+      setSiteAnalysis(data.siteAnalysis);
+      setLoadingStepIndex(SITE_LOADING_STEPS.length - 1);
+    } catch (error) {
+      console.error('Gagal menjalankan analisis situs', error);
+      setAnalysisError(error instanceof Error ? error.message : 'Analisis risiko lokasi gagal');
+      void prefetchSiteAnalysis();
+    } finally {
+      if (progressTimer) clearInterval(progressTimer);
+      setTimeout(() => {
+        setIsPending(false);
+        setLoadingKind(null);
+      }, 400);
+    }
+  }, [
+    coordinates,
+    locationName,
+    syncProject,
+    siteAnalysis,
+    clearDesignResults,
+    projectId,
+    prefetchSiteAnalysis,
+  ]);
 
   const nextStep = useCallback(() => {
     const currentIndex = WIZARD_STEPS.indexOf(currentStep);
@@ -256,13 +390,18 @@ export function usePondasiWorkspaceState(projectId: string) {
     [validationContext, syncProject],
   );
 
-  const runAnalysisPipeline = useCallback(async () => {
+  const runDesignAnalysis = useCallback(async () => {
+    if (!buildPathUnlocked) {
+      setAnalysisError('Buka jalur konsep rumah dari hasil risiko terlebih dahulu.');
+      return;
+    }
     if (!isStepComplete('INPUT_REQUIREMENTS', validationContext)) {
       setAnalysisError('Lengkapi kebutuhan rumah terlebih dahulu.');
       return;
     }
 
     setAnalysisError(null);
+    setLoadingKind('design');
     setIsPending(true);
     setLoadingStepIndex(0);
 
@@ -272,37 +411,35 @@ export function usePondasiWorkspaceState(projectId: string) {
       await syncProject('INPUT_REQUIREMENTS');
 
       progressTimer = setInterval(() => {
-        setLoadingStepIndex((prev) => Math.min(prev + 1, ANALYSIS_LOADING_STEPS.length - 2));
+        setLoadingStepIndex((prev) => Math.min(prev + 1, DESIGN_LOADING_STEPS.length - 2));
       }, 1400);
 
-      setLoadingStepIndex(1);
-      const siteReady = isSiteAnalysisFresh(siteAnalysis, coordinates);
-      let resolvedSite = siteAnalysis;
-      if (!siteReady) {
+      if (!isSiteAnalysisFresh(siteAnalysis, coordinates)) {
         const siteData = await analyzeSite(projectId);
-        resolvedSite = siteData.siteAnalysis;
-        setSiteAnalysis(resolvedSite);
+        setSiteAnalysis(siteData.siteAnalysis);
       }
 
-      setLoadingStepIndex(2);
+      setLoadingStepIndex(1);
       const designData = await analyzeDesign(projectId);
 
-      setSiteAnalysis(resolvedSite);
       setRecommendations(designData.recommendations);
       setHouseLayout(designData.houseLayout);
       setMaterialList(designData.materials);
       setAiExplanation(designData.aiExplanation);
-      setLoadingStepIndex(ANALYSIS_LOADING_STEPS.length - 1);
-      setCurrentStep('SITE_ANALYSIS');
-      await syncProject('SITE_ANALYSIS');
+      setLoadingStepIndex(DESIGN_LOADING_STEPS.length - 1);
+      setCurrentStep('RECOMMENDATIONS');
+      await syncProject('RECOMMENDATIONS');
     } catch (error) {
-      console.error('Gagal menjalankan analisis', error);
-      setAnalysisError(error instanceof Error ? error.message : 'Analisis gagal dijalankan');
+      console.error('Gagal menjalankan analisis desain', error);
+      setAnalysisError(error instanceof Error ? error.message : 'Analisis desain gagal dijalankan');
     } finally {
       if (progressTimer) clearInterval(progressTimer);
-      setTimeout(() => setIsPending(false), 400);
+      setTimeout(() => {
+        setIsPending(false);
+        setLoadingKind(null);
+      }, 400);
     }
-  }, [projectId, syncProject, validationContext, siteAnalysis, coordinates]);
+  }, [projectId, syncProject, validationContext, siteAnalysis, coordinates, buildPathUnlocked]);
 
   const resetWorkspace = useCallback(async () => {
     setIsResetting(true);
@@ -311,6 +448,7 @@ export function usePondasiWorkspaceState(projectId: string) {
     try {
       await resetProject(projectId);
       setCurrentStep('CHOOSE_LOCATION');
+      setBuildPathUnlocked(false);
       clearAnalysisResults();
       setLandDimensions(DEFAULT_DIMENSIONS);
       setPolygonGeoJson(null);
@@ -324,6 +462,19 @@ export function usePondasiWorkspaceState(projectId: string) {
     }
   }, [projectId, clearAnalysisResults]);
 
+  const finishRiskOnly = useCallback(() => {
+    setCurrentStep('SITE_ANALYSIS');
+    void syncProject('SITE_ANALYSIS');
+  }, [syncProject]);
+
+  const unlockBuildPath = useCallback(() => {
+    setBuildPathUnlocked(true);
+    const next: StepId = 'INPUT_LAND_DIMENSIONS';
+    setCurrentStep(next);
+    void syncProject(next);
+  }, [syncProject]);
+
+  const funnelPhase = buildPathUnlocked ? 'build' : 'risk_only';
   const canProceed = canProceedFromStep(currentStep, validationContext);
 
   return {
@@ -335,7 +486,7 @@ export function usePondasiWorkspaceState(projectId: string) {
     prevStep,
     goToStep,
     coordinates,
-    setCoordinates,
+    setCoordinates: setCoordinatesSafe,
     locationName,
     setLocationName,
     dimensions,
@@ -349,10 +500,21 @@ export function usePondasiWorkspaceState(projectId: string) {
     houseLayout,
     materials,
     aiExplanation,
+    twinFloodCm,
+    setTwinFloodCm,
+    twinMagnitude,
+    setTwinMagnitude,
+    buildPathUnlocked,
+    setBuildPathUnlocked,
+    funnelPhase,
+    finishRiskOnly,
+    unlockBuildPath,
     isPending,
+    loadingKind,
     loadingStepIndex,
     analysisError,
-    runAnalysisPipeline,
+    runSiteAnalysis,
+    runDesignAnalysis,
     resetWorkspace,
     isResetting,
     syncProject,

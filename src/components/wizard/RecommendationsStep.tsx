@@ -25,9 +25,10 @@ export function RecommendationsStep() {
           <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center mx-auto border border-amber-500/20">
             <Hammer className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Rekomendasi Konstruksi</h2>
-          <p className="text-sm text-gray-400">
-            Berdasarkan skor risiko lahan dan ukuran bangunan, berikut rekomendasi rule engine pondasai
+          <h2 className="text-2xl font-bold text-white tracking-tight">Rekomendasi Teknis Desain</h2>
+          <p className="text-sm text-gray-400 max-w-xl mx-auto">
+            Output analisis desain — struktur, pondasi, dan elevasi untuk konsep rumah. Bukan mitigasi
+            lokasi dari hasil risiko.
           </p>
         </div>
 
@@ -54,10 +55,8 @@ export function RecommendationsStep() {
         <div className="bg-[#0F1423] p-6 rounded-2xl border border-[#1F293D] flex gap-4 mt-6">
           <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Kesimpulan Rule Engine</h4>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              {recommendations.description}
-            </p>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Kesimpulan Rule Desain</h4>
+            <p className="text-sm text-gray-400 leading-relaxed">{recommendations.description}</p>
           </div>
         </div>
 

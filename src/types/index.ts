@@ -200,6 +200,16 @@ export interface SiteProfile {
   legalContext: string | null;
 }
 
+export interface LocationMitigationRecommendation {
+  priority: number;
+  title: string;
+  description: string;
+  sourceHazard: string;
+  strength: number;
+  informational: boolean;
+  reasons: string[];
+}
+
 export interface RiskEngineResult {
   version: EngineVersion;
   siteProfile: SiteProfile;
@@ -209,6 +219,7 @@ export interface RiskEngineResult {
   historyEvidence: { score: number };
   confidence: ConfidenceResult;
   severity: SeverityItem[];
+  recommendation?: LocationMitigationRecommendation[];
 }
 
 

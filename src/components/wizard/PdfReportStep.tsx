@@ -78,7 +78,7 @@ function ReportDocument({ data }: { data: any }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.header}>{APP_NAME} - Laporan Pra-Konstruksi</Text>
+        <Text style={styles.header}>{APP_NAME} - Laporan Pra-Konstruksi (Lengkap)</Text>
 
         <View style={styles.section}>
           <Text style={styles.title}>Informasi Lokasi & Analisis Lahan</Text>
@@ -199,9 +199,10 @@ export function PdfReportStep() {
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white tracking-tight">Laporan Anda Siap!</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Laporan Lengkap Siap</h2>
           <p className="text-sm text-gray-400">
-            Laporan lengkap: analisis geospasial, denah ruang, rekomendasi struktur, dan kebutuhan material teknis.
+            Laporan penuh Fase B: lokasi + rekomendasi desain + denah + material. Untuk PDF lokasi saja,
+            unduh dari halaman Analisis Risiko.
           </p>
         </div>
 
