@@ -35,24 +35,24 @@ export function HouseRequirementsStep() {
     requirements.floors <= maxFloorsAllowed;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <div className="max-w-2xl w-full bg-[#0F1423] border border-[#1F293D] rounded-2xl p-8 space-y-8 shadow-2xl">
+    <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-8">
+      <div className="max-w-2xl w-full bg-surface border border-border rounded-2xl p-8 space-y-8 shadow-sm">
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center mx-auto border border-amber-500/20">
+          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mx-auto border border-amber-100">
             <Home className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Kebutuhan Rumah</h2>
-          <p className="text-xs text-gray-400">
+          <h2 className="text-xl font-bold text-ink tracking-tight">Kebutuhan Rumah</h2>
+          <p className="text-xs text-ink-muted">
             Rekomendasi struktur dan denah berdasarkan kebutuhan penghuni (analisis desain).
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-400" /> Jumlah Penghuni
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider flex items-center gap-2">
+              <Users className="w-4 h-4 text-accent" /> Jumlah Penghuni
             </label>
-            <div className="flex items-center bg-[#141A2D] border border-[#23324E] rounded-lg p-1">
+            <div className="flex items-center bg-surface-muted border border-border rounded-lg p-1">
               <input
                 type="range"
                 min="1"
@@ -61,15 +61,15 @@ export function HouseRequirementsStep() {
                 onChange={(e) => setHouseRequirements((prev) => ({ ...prev, residents: Number(e.target.value) }))}
                 className="w-full mx-3"
               />
-              <span className="w-12 text-center text-white font-mono text-sm">{requirements.residents}</span>
+              <span className="w-12 text-center text-ink font-mono text-sm">{requirements.residents}</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4 text-emerald-400" /> Jumlah Kamar Tidur
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4 text-success" /> Jumlah Kamar Tidur
             </label>
-            <div className="flex items-center bg-[#141A2D] border border-[#23324E] rounded-lg p-1">
+            <div className="flex items-center bg-surface-muted border border-border rounded-lg p-1">
               <input
                 type="range"
                 min="1"
@@ -78,15 +78,15 @@ export function HouseRequirementsStep() {
                 onChange={(e) => setHouseRequirements((prev) => ({ ...prev, rooms: Number(e.target.value) }))}
                 className="w-full mx-3"
               />
-              <span className="w-12 text-center text-white font-mono text-sm">{requirements.rooms}</span>
+              <span className="w-12 text-center text-ink font-mono text-sm">{requirements.rooms}</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <Layers3 className="w-4 h-4 text-purple-400" /> Jumlah Lantai
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider flex items-center gap-2">
+              <Layers3 className="w-4 h-4 text-violet-600" /> Jumlah Lantai
             </label>
-            <p className="text-[10px] text-gray-500 font-mono">
+            <p className="text-[10px] text-ink-muted">
               Maks {maxFloorsAllowed} lantai untuk lahan ~{Math.round(landAreaFromPolygon) || '—'} m²
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -98,8 +98,8 @@ export function HouseRequirementsStep() {
                   onClick={() => setHouseRequirements((prev) => ({ ...prev, floors: floorCount }))}
                   className={`py-3 rounded-lg text-sm font-bold border transition disabled:opacity-40 disabled:cursor-not-allowed ${
                     requirements.floors === floorCount
-                      ? 'bg-purple-500/20 border-purple-500 text-purple-400'
-                      : 'bg-[#141A2D] border-[#23324E] text-gray-400 hover:text-white'
+                      ? 'bg-violet-50 border-violet-400 text-violet-700'
+                      : 'bg-surface-muted border-border text-ink-muted hover:text-ink'
                   }`}
                 >
                   {floorCount} Lantai
@@ -109,8 +109,8 @@ export function HouseRequirementsStep() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-yellow-400" /> Budget Tersedia (Opsional)
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-amber-500" /> Budget Tersedia (Opsional)
             </label>
             <input
               type="number"
@@ -124,21 +124,21 @@ export function HouseRequirementsStep() {
                 }));
               }}
               placeholder="Rp (Kosongkan jika tidak ada)"
-              className="w-full bg-[#141A2D] border border-[#23324E] focus:border-yellow-500 focus:outline-none px-4 py-3 rounded-lg text-white font-mono text-sm"
+              className="w-full bg-surface-muted border border-border focus:border-amber-500 focus:outline-none px-4 py-3 rounded-lg text-ink font-mono text-sm"
             />
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px] text-ink-muted">
               Budget memengaruhi coverage bangunan (luas footprint) saat analisis desain.
             </p>
           </div>
         </div>
 
-        {analysisError ? <p className="text-xs text-red-400 text-center">{analysisError}</p> : null}
+        {analysisError ? <p className="text-xs text-danger text-center">{analysisError}</p> : null}
 
-        <div className="pt-6 border-t border-[#1F293D]">
+        <div className="pt-6 border-t border-border">
           <button
             onClick={handleNext}
             disabled={!isValid || isPending}
-            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition transform hover:-translate-y-0.5 uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full py-4 bg-accent hover:bg-blue-600 text-white font-bold rounded-xl shadow-sm shadow-blue-600/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Jalankan Analisis Desain
           </button>

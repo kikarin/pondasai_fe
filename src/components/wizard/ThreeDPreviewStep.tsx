@@ -215,15 +215,15 @@ export function ThreeDPreviewStep() {
       <div className="max-w-4xl mx-auto space-y-5 w-full flex-1 flex flex-col">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Box className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-xl font-bold text-ink tracking-tight flex items-center gap-2">
+              <Box className="w-5 h-5 text-success" />
               Preview 3D
             </h2>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
               Beta
             </span>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-ink-muted mt-1">
             Massa bangunan sederhana · elevasi +{recommendations?.floorElevation ?? 0} cm · {houseLayout.floors ?? 1}{' '}
             lantai · atap {houseLayout.roofType ?? 'limas'}.
           </p>
@@ -234,7 +234,7 @@ export function ThreeDPreviewStep() {
           material mengacu ke denah 2D dan perhitungan backend.
         </BetaFeatureNotice>
 
-        <div className="flex-1 bg-[#0A0D15] border border-[#1F293D] rounded-2xl relative overflow-hidden min-h-[360px]">
+        <div className="flex-1 bg-map-chrome border border-map-border rounded-2xl relative overflow-hidden min-h-[360px] shadow-sm">
           <div ref={mountRef} className="absolute inset-0" />
           <div className="absolute bottom-3 left-3 right-3 pointer-events-none flex flex-wrap gap-2">
             {floodVisual?.enabled ? (
@@ -264,9 +264,12 @@ export function ThreeDPreviewStep() {
           {houseLayout.rooms.map((room, index) => (
             <span
               key={`${room.name}-${index}`}
-              className="text-[10px] px-2 py-1 rounded-md border border-[#23324E] bg-[#141A2D] font-mono"
-              style={{ color: getRoomColor(index) }}
+              className="text-[12px] px-2.5 py-1 rounded-md border border-border bg-surface text-ink font-medium"
             >
+              <span
+                className="inline-block w-2 h-2 rounded-full mr-1.5 align-middle"
+                style={{ backgroundColor: getRoomColor(index) }}
+              />
               {room.name}
             </span>
           ))}

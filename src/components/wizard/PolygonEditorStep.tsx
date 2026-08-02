@@ -61,14 +61,14 @@ export function PolygonEditorStep() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0E131F]">
-      <div className="p-4 bg-[#141A2D] border-b border-[#1F293D] flex flex-wrap items-center justify-between z-10 gap-4 shrink-0">
+    <div className="flex-1 flex flex-col min-h-0 bg-canvas">
+      <div className="p-4 bg-surface border-b border-border flex flex-wrap items-center justify-between z-10 gap-4 shrink-0">
         <div className="space-y-1 min-w-[220px]">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <MousePointerSquareDashed className="w-4 h-4 text-blue-400" />
+          <h2 className="text-sm font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+            <MousePointerSquareDashed className="w-4 h-4 text-accent" />
             Edit Polygon Lahan
           </h2>
-          <p className="text-[10px] text-gray-400 font-mono max-w-md">
+          <p className="text-[10px] text-ink-muted max-w-md">
             Tarik titik biru sudut lahan. Klik titik hijau di tengah sisi untuk menambah vertex.
           </p>
         </div>
@@ -77,7 +77,7 @@ export function PolygonEditorStep() {
           <button
             type="button"
             disabled={!isReady}
-            className="px-3 py-2 rounded-lg text-[10px] font-bold border bg-blue-600 border-blue-500 text-white flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3 py-2 rounded-lg text-[10px] font-bold border bg-accent border-accent text-white flex items-center gap-1.5 disabled:opacity-50"
           >
             <MousePointer2 className="w-3.5 h-3.5" />
             Edit Titik
@@ -86,7 +86,7 @@ export function PolygonEditorStep() {
             type="button"
             onClick={handleResetToDimensions}
             disabled={!isReady}
-            className="px-3 py-2 rounded-lg text-[10px] font-bold border bg-[#0A0D15] border-[#1E293F] text-gray-300 hover:border-indigo-500 transition disabled:opacity-50 flex items-center gap-1.5"
+            className="px-3 py-2 rounded-lg text-[10px] font-bold border bg-surface-muted border-border text-ink-secondary hover:border-accent transition disabled:opacity-50 flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Reset dari Dimensi
@@ -94,13 +94,13 @@ export function PolygonEditorStep() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="bg-[#0A0D15] border border-[#1E293F] px-4 py-2 rounded-lg text-center">
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block">Luas</span>
-            <span className="text-sm font-bold text-blue-400 font-mono">{metrics.areaM2} m²</span>
+          <div className="bg-surface-muted border border-border px-4 py-2 rounded-lg text-center">
+            <span className="text-[10px] text-ink-muted font-bold uppercase tracking-widest block">Luas</span>
+            <span className="text-sm font-bold text-accent font-mono">{metrics.areaM2} m²</span>
           </div>
-          <div className="bg-[#0A0D15] border border-[#1E293F] px-4 py-2 rounded-lg text-center">
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block">Keliling</span>
-            <span className="text-sm font-bold text-emerald-400 font-mono">{metrics.perimeterM} m</span>
+          <div className="bg-surface-muted border border-border px-4 py-2 rounded-lg text-center">
+            <span className="text-[10px] text-ink-muted font-bold uppercase tracking-widest block">Keliling</span>
+            <span className="text-sm font-bold text-success font-mono">{metrics.perimeterM} m</span>
           </div>
           <button
             type="button"
@@ -115,10 +115,10 @@ export function PolygonEditorStep() {
 
       <div className="flex-1 min-h-[420px] relative">
         {!isReady ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0E131F]/80">
-            <div className="text-center space-y-2">
-              <Loader2 className="w-6 h-6 text-blue-500 animate-spin mx-auto" />
-              <p className="text-xs text-gray-400 font-mono">Memuat peta &amp; polygon lahan...</p>
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/50">
+            <div className="text-center space-y-2 bg-surface border border-border rounded-xl px-5 py-4 shadow-sm">
+              <Loader2 className="w-6 h-6 text-accent animate-spin mx-auto" />
+              <p className="text-xs text-ink-muted">Memuat peta &amp; polygon lahan...</p>
             </div>
           </div>
         ) : null}

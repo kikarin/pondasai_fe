@@ -31,11 +31,11 @@ export function AppEntryPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#080B10] text-white flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center gap-4">
       <PageMeta path="/app" noIndex />
-      <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-      <p className="text-sm text-gray-400 font-mono">Menyiapkan workspace proyek baru...</p>
-      {error ? <p className="text-xs text-red-400">{error}</p> : null}
+      <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      <p className="text-sm text-ink-muted">Menyiapkan workspace proyek baru...</p>
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );
 }

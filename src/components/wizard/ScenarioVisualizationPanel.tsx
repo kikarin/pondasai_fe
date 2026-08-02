@@ -1,8 +1,3 @@
-/**
- * Simulasi skenario Step 5 — flood (Fase 1) + earthquake (Fase 2).
- * @see docs/v2-scenario-contract.md
- */
-
 import { useMemo } from 'react';
 import { Droplets, Activity } from 'lucide-react';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
@@ -38,65 +33,63 @@ const FLOOD_STATUS_META: Record<
 > = {
   aman: {
     label: 'Aman vs lantai',
-    tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
-    bar: 'bg-sky-400/70',
+    tone: 'text-success border-emerald-200 bg-success-soft',
+    bar: 'bg-sky-400/80',
   },
   tergenang_plinth: {
     label: 'Elevasi lantai tergenang',
-    tone: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
-    bar: 'bg-sky-400/85',
+    tone: 'text-warning border-amber-200 bg-warning-soft',
+    bar: 'bg-sky-500/85',
   },
   masuk_lantai: {
     label: 'Masuk lantai',
-    tone: 'text-red-300 border-red-500/40 bg-red-500/10',
-    bar: 'bg-sky-500',
+    tone: 'text-danger border-red-200 bg-danger-soft',
+    bar: 'bg-sky-600',
   },
   unknown: {
     label: 'Belum dihitung',
-    tone: 'text-gray-400 border-[#23324E] bg-[#141A2D]',
-    bar: 'bg-sky-500/40',
+    tone: 'text-ink-muted border-border bg-surface-muted',
+    bar: 'bg-sky-400/40',
   },
 };
 
 const EQ_BAND_META: Record<EarthquakeImpactBand, { label: string; tone: string }> = {
   ringan: {
     label: 'Dampak konsep ringan',
-    tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
+    tone: 'text-success border-emerald-200 bg-success-soft',
   },
   sedang: {
     label: 'Dampak konsep sedang',
-    tone: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
+    tone: 'text-warning border-amber-200 bg-warning-soft',
   },
   berat: {
     label: 'Dampak konsep berat',
-    tone: 'text-red-300 border-red-500/40 bg-red-500/10',
+    tone: 'text-danger border-red-200 bg-danger-soft',
   },
   unknown: {
     label: 'Belum dihitung',
-    tone: 'text-gray-400 border-[#23324E] bg-[#141A2D]',
+    tone: 'text-ink-muted border-border bg-surface-muted',
   },
 };
 
 const EMPHASIS_CLASS: Record<StructureEmphasis, string> = {
-  focus: 'border-amber-500/50 bg-amber-500/15 text-amber-100',
-  recommended: 'border-sky-500/30 bg-sky-500/10 text-sky-100',
-  baseline: 'border-[#23324E] bg-[#141A2D] text-gray-400',
+  focus: 'border-amber-200 bg-amber-50 text-amber-900',
+  recommended: 'border-sky-200 bg-sky-50 text-sky-900',
+  baseline: 'border-border bg-surface-muted text-ink-secondary',
 };
 
 function chipClass(active: boolean, accent: 'sky' | 'amber', disabled: boolean): string {
   if (disabled) {
-    return active
-      ? 'border-gray-600 bg-[#0A0D15] text-gray-500 cursor-not-allowed opacity-60'
-      : 'border-[#23324E] bg-[#0A0D15] text-gray-600 cursor-not-allowed opacity-50';
+    return 'border-border bg-surface-muted text-slate-400 cursor-not-allowed opacity-60';
   }
   if (accent === 'sky') {
     return active
-      ? 'border-sky-500/50 bg-sky-500/15 text-sky-200'
-      : 'border-[#23324E] bg-[#141A2D] text-gray-400 hover:text-gray-200';
+      ? 'border-sky-400 bg-sky-50 text-sky-800'
+      : 'border-border bg-surface text-ink-muted hover:text-ink hover:border-border-strong';
   }
   return active
-    ? 'border-amber-500/50 bg-amber-500/15 text-amber-100'
-    : 'border-[#23324E] bg-[#141A2D] text-gray-400 hover:text-gray-200';
+    ? 'border-amber-400 bg-amber-50 text-amber-900'
+    : 'border-border bg-surface text-ink-muted hover:text-ink hover:border-border-strong';
 }
 
 function FloodCrossSection({
@@ -113,8 +106,8 @@ function FloodCrossSection({
 
   return (
     <div className="space-y-2">
-      <div className="relative h-36 rounded-xl border border-[#23324E] bg-[#070A12] overflow-hidden">
-        <div className="absolute inset-x-0 bottom-0 h-3 bg-[#1F293D]" title="Tanah" />
+      <div className="relative h-36 rounded-xl border border-border bg-slate-100 overflow-hidden">
+        <div className="absolute inset-x-0 bottom-0 h-3 bg-slate-300" title="Tanah" />
         {view.scenarioCm > 0 ? (
           <div
             className={`absolute inset-x-0 bottom-3 transition-all duration-300 ${meta.bar}`}
@@ -123,30 +116,30 @@ function FloodCrossSection({
           />
         ) : null}
         <div
-          className="absolute left-1/2 -translate-x-1/2 bottom-3 w-24 border border-[#4B5563] bg-[#1E293B]/95"
+          className="absolute left-1/2 -translate-x-1/2 bottom-3 w-24 border border-slate-400 bg-white/95"
           style={{ height: `${Math.max(floorPct, 12)}%` }}
         >
           <div
-            className="absolute inset-x-0 top-0 border-t-2 border-dashed border-violet-400/80"
+            className="absolute inset-x-0 top-0 border-t-2 border-dashed border-violet-500"
             title={`Lantai +${floorCm} cm`}
           />
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-20 h-8 border border-blue-500/40 bg-blue-500/20 rounded-sm" />
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-20 h-8 border border-blue-300 bg-blue-100 rounded-sm" />
         </div>
-        <div className="absolute top-2 left-2 text-[9px] font-mono text-gray-500">
+        <div className="absolute top-2 left-2 text-[10px] text-ink-muted">
           potongan · skala {maxCm} cm
         </div>
-        <div className="absolute top-2 right-2 text-[9px] font-mono text-violet-300/80">
+        <div className="absolute top-2 right-2 text-[10px] text-violet-700">
           lantai +{floorCm} cm
         </div>
-        <div className="absolute bottom-4 left-2 text-[9px] font-mono text-sky-200/80">
+        <div className="absolute bottom-4 left-2 text-[10px] text-sky-800 font-medium">
           air {view.scenarioCm} cm
         </div>
       </div>
       <div className="flex items-center justify-between gap-2">
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.tone}`}>
+        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${meta.tone}`}>
           {meta.label}
         </span>
-        <span className="text-[10px] font-mono text-gray-500">
+        <span className="text-[11px] text-ink-muted">
           air − lantai = {view.waterAbovePlinthCm == null ? '—' : `${view.waterAbovePlinthCm} cm`}
         </span>
       </div>
@@ -158,21 +151,21 @@ function StructureHighlightList({ view }: { view: EarthquakeScenarioView }) {
   const band = EQ_BAND_META[view.impactBand];
   return (
     <div className="space-y-2">
-      <div className="rounded-xl border border-[#23324E] bg-[#070A12] p-3 space-y-2 min-h-[120px]">
+      <div className="rounded-xl border border-border bg-surface-muted p-3 space-y-2 min-h-[120px]">
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${band.tone}`}>
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${band.tone}`}>
             {band.label}
           </span>
-          <span className="text-[9px] font-mono text-gray-500">M{view.magnitude}</span>
+          <span className="text-[11px] text-ink-muted">M{view.magnitude}</span>
         </div>
-        <p className="text-[10px] text-amber-200/70">{view.illustrativeIntensity}</p>
+        <p className="text-[12px] text-amber-800">{view.illustrativeIntensity}</p>
         <ul className="space-y-1.5">
           {view.structureHighlights.map((item) => (
             <li
               key={item.id}
-              className={`text-[10px] leading-relaxed px-2 py-1.5 rounded-lg border ${EMPHASIS_CLASS[item.emphasis]}`}
+              className={`text-[12px] leading-relaxed px-2 py-1.5 rounded-lg border ${EMPHASIS_CLASS[item.emphasis]}`}
             >
-              <span className="font-bold uppercase tracking-wider text-[9px] opacity-70 mr-1.5">
+              <span className="font-bold uppercase tracking-wider text-[10px] opacity-70 mr-1.5">
                 {item.emphasis === 'focus'
                   ? 'fokus'
                   : item.emphasis === 'recommended'
@@ -216,17 +209,17 @@ function FloodScenarioPanel({
 
   return (
     <section
-      className={`rounded-xl border border-[#1F293D] bg-[#0A0D15]/50 p-4 space-y-3 ${
+      className={`rounded-xl border border-border bg-surface p-4 space-y-3 shadow-sm ${
         interactionDisabled ? 'opacity-75' : ''
       }`}
     >
       <div className="flex items-center gap-2">
-        <Droplets className="w-4 h-4 text-sky-400" />
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+        <Droplets className="w-4 h-4 text-sky-600" />
+        <h4 className="text-xs font-bold uppercase tracking-wider text-ink-secondary">
           Skenario Banjir
         </h4>
       </div>
-      <p className="text-[10px] font-mono text-gray-500">
+      <p className="text-[12px] text-ink-muted">
         Bahaya {inputs.banjirScore ?? '—'} ({inputs.banjirCategory ?? 'n/a'}) · {floorLabel}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -243,7 +236,7 @@ function FloodScenarioPanel({
               onClick={() => {
                 if (!interactionDisabled) onScenarioCmChange(cm);
               }}
-              className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition ${chipClass(
+              className={`text-[12px] font-semibold px-2.5 py-1 rounded-lg border transition ${chipClass(
                 active,
                 'sky',
                 interactionDisabled,
@@ -251,7 +244,7 @@ function FloodScenarioPanel({
             >
               {label}
               {isDefault && !active ? (
-                <span className="ml-1 text-[9px] text-gray-600">default</span>
+                <span className="ml-1 text-[10px] text-slate-400">default</span>
               ) : null}
             </button>
           );
@@ -260,12 +253,12 @@ function FloodScenarioPanel({
       <FloodCrossSection view={view} floorCm={inputs.floorElevationCm} />
       <ul className="space-y-1">
         {view.reasons.map((reason) => (
-          <li key={reason} className="text-[10px] text-blue-200/75 leading-relaxed">
+          <li key={reason} className="text-[12px] text-ink-secondary leading-relaxed">
             · {reason}
           </li>
         ))}
       </ul>
-      <p className="text-[10px] text-gray-500 leading-relaxed">{FLOOD_SCENARIO_DISCLAIMER}</p>
+      <p className="text-[11px] text-ink-muted leading-relaxed">{FLOOD_SCENARIO_DISCLAIMER}</p>
     </section>
   );
 }
@@ -293,17 +286,17 @@ function EarthquakeScenarioPanel({
 
   return (
     <section
-      className={`rounded-xl border border-[#1F293D] bg-[#0A0D15]/50 p-4 space-y-3 ${
+      className={`rounded-xl border border-border bg-surface p-4 space-y-3 shadow-sm ${
         interactionDisabled ? 'opacity-75' : ''
       }`}
     >
       <div className="flex items-center gap-2">
-        <Activity className="w-4 h-4 text-amber-400" />
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+        <Activity className="w-4 h-4 text-amber-600" />
+        <h4 className="text-xs font-bold uppercase tracking-wider text-ink-secondary">
           Skenario Gempa
         </h4>
       </div>
-      <p className="text-[10px] font-mono text-gray-500">
+      <p className="text-[12px] text-ink-muted">
         Bahaya {inputs.gempaScore ?? '—'} ({inputs.gempaCategory ?? 'n/a'})
         {inputs.structureType ? ` · struktur ${inputs.structureType}` : ' · struktur belum tersedia'}
       </p>
@@ -320,7 +313,7 @@ function EarthquakeScenarioPanel({
               onClick={() => {
                 if (!interactionDisabled) onMagnitudeChange(m);
               }}
-              className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition ${chipClass(
+              className={`text-[12px] font-semibold px-2.5 py-1 rounded-lg border transition ${chipClass(
                 active,
                 'amber',
                 interactionDisabled,
@@ -328,7 +321,7 @@ function EarthquakeScenarioPanel({
             >
               M{m}
               {isDefault && !active ? (
-                <span className="ml-1 text-[9px] text-gray-600">default</span>
+                <span className="ml-1 text-[10px] text-slate-400">default</span>
               ) : null}
             </button>
           );
@@ -337,12 +330,12 @@ function EarthquakeScenarioPanel({
       <StructureHighlightList view={view} />
       <ul className="space-y-1">
         {view.reasons.map((reason) => (
-          <li key={reason} className="text-[10px] text-amber-100/70 leading-relaxed">
+          <li key={reason} className="text-[12px] text-ink-secondary leading-relaxed">
             · {reason}
           </li>
         ))}
       </ul>
-      <p className="text-[10px] text-gray-500 leading-relaxed">{EARTHQUAKE_SCENARIO_DISCLAIMER}</p>
+      <p className="text-[11px] text-ink-muted leading-relaxed">{EARTHQUAKE_SCENARIO_DISCLAIMER}</p>
     </section>
   );
 }
@@ -370,28 +363,24 @@ export function ScenarioVisualizationPanel({
   const magnitude = twinMagnitude ?? defaultEq;
 
   return (
-    <div className="rounded-2xl border border-[#1F293D] bg-[#0F1423] p-5 space-y-5">
+    <div className="rounded-2xl border border-border bg-surface p-5 space-y-5 shadow-sm">
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-ink-secondary">
             Skenario Edukasi
           </h3>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/25">
-            Step 5
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+            Ilustratif
           </span>
         </div>
-        <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
-          Skenario edukasi (diagram 2D) di atas skor InaRISK — berbeda dari{' '}
-          <span className="text-gray-400">Digital Twin ilustratif</span> di Step 8 Preview 3D. Menggeser
-          chip <span className="text-gray-400">tidak</span> mengubah skor keseluruhan / kategori hazard.
-          Nilai chip tersinkron dengan twin Step 8 (state lokal, bukan skor).
+        <p className="text-[12px] text-ink-muted mt-1 leading-relaxed">
+          Diagram edukasi di atas skor InaRISK. Menggeser chip tidak mengubah skor lokasi.
         </p>
       </div>
 
       {siteBlocked ? (
-        <p className="text-[10px] text-amber-200/90 leading-relaxed border border-amber-500/25 bg-amber-500/10 rounded-lg px-3 py-2">
-          Lokasi tertutup site guard (laut/air) — chip skenario dinonaktifkan. Tampilan di bawah
-          bersifat advisory saja, bukan penilaian layak bangun.
+        <p className="text-[12px] text-amber-800 leading-relaxed border border-amber-200 bg-amber-50 rounded-lg px-3 py-2">
+          Lokasi tertutup site guard (laut/air) — chip skenario dinonaktifkan.
         </p>
       ) : null}
 

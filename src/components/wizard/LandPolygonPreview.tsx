@@ -107,19 +107,19 @@ export function LandPolygonPreview({ coordinates, dimensions, hasValidInput }: L
   }, [coordinates.lat, coordinates.lng, dimensionsSignature, previewFeature]);
 
   return (
-    <div className="bg-[#0F1423] border border-[#1F293D] rounded-2xl overflow-hidden flex flex-col h-full min-h-[360px]">
-      <div className="px-4 py-3 border-b border-[#1F293D] flex items-center justify-between gap-3 shrink-0">
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden flex flex-col h-full min-h-[360px] shadow-sm">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3 shrink-0">
         <div>
-          <p className="text-xs font-bold text-white uppercase tracking-wider">Preview Polygon Lahan</p>
-          <p className="text-[10px] text-gray-500 font-mono mt-0.5">
+          <p className="text-xs font-bold text-ink uppercase tracking-wider">Preview Polygon Lahan</p>
+          <p className="text-[10px] text-ink-muted mt-0.5">
             Perkiraan bentuk awal di lokasi proyek
           </p>
         </div>
         {metrics ? (
           <div className="flex gap-2 text-[10px] font-mono">
-            <span className="text-blue-400">{metrics.areaM2} m²</span>
-            <span className="text-gray-600">|</span>
-            <span className="text-emerald-400">{metrics.perimeterM} m</span>
+            <span className="text-accent">{metrics.areaM2} m²</span>
+            <span className="text-border-strong">|</span>
+            <span className="text-success">{metrics.perimeterM} m</span>
           </div>
         ) : null}
       </div>
@@ -129,8 +129,8 @@ export function LandPolygonPreview({ coordinates, dimensions, hasValidInput }: L
           <div ref={mapContainer} className="w-full h-full" />
         </div>
         {!hasValidInput ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0E131F]/55 pointer-events-none">
-            <p className="text-xs text-gray-400 text-center px-6">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40 pointer-events-none">
+            <p className="text-xs text-white text-center px-6">
               Isi lebar &amp; panjang, atau total luas, untuk melihat preview polygon.
             </p>
           </div>

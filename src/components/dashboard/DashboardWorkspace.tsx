@@ -16,17 +16,17 @@ export function DashboardWorkspace() {
 
   if (isBootstrapping) {
     return (
-      <section className="flex-1 flex items-center justify-center bg-[#080B10]">
+      <section className="flex-1 flex items-center justify-center bg-canvas">
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
-          <p className="text-xs text-gray-400 font-mono">Memuat proyek dari URL...</p>
+          <Loader2 className="w-8 h-8 text-accent animate-spin mx-auto" />
+          <p className="text-xs text-ink-muted">Memuat proyek dari URL...</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="flex-1 overflow-hidden flex flex-col bg-[#080B10]">
+    <section className="flex-1 overflow-hidden flex flex-col bg-canvas min-h-0">
       {currentStep === 'CHOOSE_LOCATION' && <ChooseLocationStep />}
       {currentStep === 'INPUT_LAND_DIMENSIONS' && <LandDimensionsStep />}
       {currentStep === 'EDIT_POLYGON' && <PolygonEditorStep />}

@@ -40,28 +40,28 @@ export function LandDimensionsStep() {
   };
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-6">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-6 items-stretch">
-        <div className="bg-[#0F1423] border border-[#1F293D] rounded-2xl p-8 space-y-8">
+    <div className="flex-1 min-h-0 overflow-y-auto p-5 md:p-6">
+      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-5 items-start">
+        <div className="bg-surface border border-border rounded-2xl p-8 space-y-8 shadow-sm">
           <div className="text-center space-y-3">
-            <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center mx-auto border border-emerald-500/20">
+            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto border border-emerald-100">
               <Ruler className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Input Data Tanah</h2>
-            <p className="text-xs text-gray-400">
+            <h2 className="text-xl font-bold text-ink tracking-tight">Input Data Tanah</h2>
+            <p className="text-xs text-ink-muted">
               Masukkan estimasi ukuran atau luas tanah. Preview polygon di sebelah kanan akan
               diperbarui otomatis.
             </p>
           </div>
 
           <div className="space-y-6">
-            <div className="space-y-3 border-b border-[#1F293D] pb-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+            <div className="space-y-3 border-b border-border pb-6">
+              <label className="text-xs font-bold text-ink-muted uppercase tracking-wider block">
                 Opsi 1: Dimensi (Meter)
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Lebar Lahan</label>
+                  <label className="text-xs text-ink-muted mb-1 block">Lebar Lahan</label>
                   <input
                     type="number"
                     min="0"
@@ -73,12 +73,12 @@ export function LandDimensionsStep() {
                         area: undefined,
                       }))
                     }
-                    className="w-full bg-[#141A2D] border border-[#23324E] focus:border-blue-500 focus:outline-none px-3 py-2 rounded-lg text-white font-mono"
+                    className="w-full bg-surface-muted border border-border focus:border-accent focus:outline-none px-3 py-2 rounded-lg text-ink font-mono"
                     placeholder="mis. 10"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Panjang Lahan</label>
+                  <label className="text-xs text-ink-muted mb-1 block">Panjang Lahan</label>
                   <input
                     type="number"
                     min="0"
@@ -90,7 +90,7 @@ export function LandDimensionsStep() {
                         area: undefined,
                       }))
                     }
-                    className="w-full bg-[#141A2D] border border-[#23324E] focus:border-blue-500 focus:outline-none px-3 py-2 rounded-lg text-white font-mono"
+                    className="w-full bg-surface-muted border border-border focus:border-accent focus:outline-none px-3 py-2 rounded-lg text-ink font-mono"
                     placeholder="mis. 15"
                   />
                 </div>
@@ -98,7 +98,7 @@ export function LandDimensionsStep() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-ink-muted uppercase tracking-wider block">
                 Opsi 2: Total Luas (m²)
               </label>
               <input
@@ -112,18 +112,18 @@ export function LandDimensionsStep() {
                     length: undefined,
                   })
                 }
-                className="w-full bg-[#141A2D] border border-[#23324E] focus:border-emerald-500 focus:outline-none px-3 py-2 rounded-lg text-white font-mono"
+                className="w-full bg-surface-muted border border-border focus:border-emerald-500 focus:outline-none px-3 py-2 rounded-lg text-ink font-mono"
                 placeholder="mis. 150"
               />
             </div>
 
-            {error ? <p className="text-xs text-red-400">{error}</p> : null}
+            {error ? <p className="text-xs text-danger">{error}</p> : null}
 
             <button
               type="button"
               onClick={() => void handleNext()}
               disabled={!hasValidInput || isSubmitting}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-accent hover:bg-blue-600 text-white font-bold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Buat Polygon

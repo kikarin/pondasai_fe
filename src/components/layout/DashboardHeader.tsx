@@ -1,42 +1,64 @@
-import { ChevronLeft, ChevronRight, Layers3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
+import type { StepId } from '../../types';
+
+const STEP_SHORT: Record<StepId, string> = {
+  CHOOSE_LOCATION: 'Pilih Lokasi',
+  SITE_ANALYSIS: 'Analisis Risiko',
+  INPUT_LAND_DIMENSIONS: 'Data Tanah',
+  EDIT_POLYGON: 'Area Bangunan',
+  INPUT_REQUIREMENTS: 'Kebutuhan',
+  RECOMMENDATIONS: 'Rekomendasi',
+  FLOOR_PLAN: 'Denah 2D',
+  PREVIEW_3D: 'Preview 3D',
+  MATERIAL_LIST: 'Material',
+  PDF_REPORT: 'PDF Report',
+};
 
 export function DashboardHeader() {
-  const { currentStep, steps, prevStep, nextStep, locationName, canProceed, isPending } = usePondasiWorkspace();
+  const { currentStep, steps, prevStep, nextStep, locationName, canProceed, isPending } =
+    usePondasiWorkspace();
 
   const currentIndex = steps.indexOf(currentStep);
   const isFirstStep = currentIndex === 0;
   const isLastStep = currentIndex === steps.length - 1;
   const isBeforeAnalysis = currentStep === 'INPUT_REQUIREMENTS';
+  const projectLabel = locationName?.trim() || 'Lokasi Baru';
 
   return (
     <header
       id="dashboard-header"
-      className="h-[76px] bg-[#0E131F]/80 backdrop-blur-md border-b border-[#1F293D] px-8 flex items-center justify-between shrink-0 sticky top-0 z-40"
+      className="h-[64px] bg-surface border-b border-border px-6 flex items-center justify-between shrink-0 sticky top-0 z-40"
     >
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Layers3 className="w-5 h-5 text-blue-400" />
-          <span className="text-sm font-semibold text-white shrink-0">Proyek Aktif:</span>
-          <span
-            className="text-xs font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md font-bold inline-block max-w-[240px] sm:max-w-[420px] lg:max-w-[560px] truncate align-middle"
-            title={locationName || 'Lokasi Baru'}
-          >
-            {locationName || 'Lokasi Baru'}
+      <div className="min-w-0 flex items-center gap-3">
+        <nav className="flex items-center gap-1.5 text-sm min-w-0" aria-label="Breadcrumb">
+          <span className="font-mono text-[11px] text-ink-muted uppercase tracking-wide shrink-0">
+            Proyek
           </span>
-        </div>
+          <span className="text-border-strong shrink-0">/</span>
+          <span
+            className="font-display font-semibold text-ink truncate max-w-[200px] sm:max-w-[320px] lg:max-w-[480px]"
+            title={projectLabel}
+          >
+            {projectLabel}
+          </span>
+          <span className="text-border-strong shrink-0 hidden sm:inline">/</span>
+          <span className="text-ink-secondary font-medium truncate hidden sm:inline">
+            {STEP_SHORT[currentStep]}
+          </span>
+        </nav>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 shrink-0">
         {!isFirstStep && (
           <button
             type="button"
             onClick={prevStep}
             disabled={isPending}
-            className="px-4 py-2 bg-[#121A2D] hover:bg-[#1A253E] border border-[#2E3C5C] hover:border-[#3E4F76] rounded-lg text-xs font-medium text-gray-300 hover:text-white flex items-center gap-2 transition disabled:opacity-50"
+            className="px-3.5 py-2 bg-surface hover:bg-surface-muted border border-border hover:border-border-strong rounded-lg text-xs font-medium text-ink-secondary hover:text-ink flex items-center gap-1.5 transition disabled:opacity-50"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>Kembali</span>
+            <span className="hidden sm:inline">Kembali</span>
           </button>
         )}
 
@@ -45,7 +67,7 @@ export function DashboardHeader() {
             type="button"
             onClick={nextStep}
             disabled={!canProceed || isPending}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-blue-900/30 flex items-center gap-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3.5 py-2 bg-[var(--color-accent)] hover:bg-[#2450d1] text-white rounded-lg text-xs font-semibold shadow-sm shadow-[var(--color-accent)]/25 flex items-center gap-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>Selanjutnya</span>
             <ChevronRight className="w-4 h-4" />
