@@ -1,4 +1,5 @@
 import type { Coordinates } from '../types';
+import { apiRequest } from './apiClient';
 
 export interface GeocodeResult {
   name: string;
@@ -9,33 +10,11 @@ export interface GeocodeResult {
   adminName?: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
-
-async function readGeocodeError(response: Response): Promise<never> {
-  const body = await response.text();
-  try {
-    const parsed = JSON.parse(body) as { detail?: string };
-    throw new Error(parsed.detail || 'Geocode gagal');
-  } catch (error) {
-    if (error instanceof Error && error.message !== 'Geocode gagal') {
-      throw error;
-    }
-    throw new Error(body || 'Geocode gagal');
-  }
-}
-
 export async function resolveLocation(query: string): Promise<GeocodeResult> {
-  const response = await fetch(`${API_BASE}/api/geocode/resolve`, {
+  return apiRequest<GeocodeResult>('/api/geocode/resolve', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   });
-
-  if (!response.ok) {
-    await readGeocodeError(response);
-  }
-
-  return response.json() as Promise<GeocodeResult>;
 }
 
 export async function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult> {
@@ -43,13 +22,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<GeocodeR
     lat: String(lat),
     lng: String(lng),
   });
-  const response = await fetch(`${API_BASE}/api/geocode/reverse?${params.toString()}`);
-
-  if (!response.ok) {
-    await readGeocodeError(response);
-  }
-
-  return response.json() as Promise<GeocodeResult>;
+  return apiRequest<GeocodeResult>(`/api/geocode/reverse?${params.toString()}`);
 }
 
 export function isGoogleMapsUrl(value: string): boolean {

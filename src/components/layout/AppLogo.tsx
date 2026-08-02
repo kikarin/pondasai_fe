@@ -5,6 +5,7 @@ type AppLogoProps = {
   to?: string;
   showTagline?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  tone?: 'dark' | 'light';
   className?: string;
 };
 
@@ -14,8 +15,16 @@ const sizeMap = {
   lg: { icon: 'w-12 h-12', title: 'text-2xl', tagline: 'text-xs' },
 };
 
-export function AppLogo({ to, showTagline = false, size = 'md', className = '' }: AppLogoProps) {
+export function AppLogo({
+  to,
+  showTagline = false,
+  size = 'md',
+  tone = 'dark',
+  className = '',
+}: AppLogoProps) {
   const sizes = sizeMap[size];
+  const titleColor = tone === 'light' ? 'text-ink' : 'text-white';
+  const taglineColor = tone === 'light' ? 'text-ink-muted' : 'text-gray-400';
 
   const content = (
     <div className={`flex items-center gap-3 ${className}`}>
@@ -29,11 +38,11 @@ export function AppLogo({ to, showTagline = false, size = 'md', className = '' }
         />
       </div>
       <div className="min-w-0">
-        <span className={`${sizes.title} font-bold tracking-tight text-white lowercase block leading-none`}>
+        <span className={`${sizes.title} font-bold tracking-tight ${titleColor} lowercase block leading-none`}>
           {APP_NAME}
         </span>
         {showTagline ? (
-          <p className={`${sizes.tagline} text-gray-400 uppercase tracking-widest font-mono font-bold mt-1 truncate`}>
+          <p className={`${sizes.tagline} ${taglineColor} uppercase tracking-widest font-mono font-bold mt-1 truncate`}>
             {APP_SUBTITLE}
           </p>
         ) : null}

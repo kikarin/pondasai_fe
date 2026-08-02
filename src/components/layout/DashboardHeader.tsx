@@ -1,5 +1,8 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
+import { useAuth } from '../../context/AuthContext';
+import { ProjectSwitcher } from './ProjectSwitcher';
 import type { StepId } from '../../types';
 
 const STEP_SHORT: Record<StepId, string> = {
@@ -16,6 +19,8 @@ const STEP_SHORT: Record<StepId, string> = {
 };
 
 export function DashboardHeader() {
+  const { id: projectId } = useParams<{ id: string }>();
+  const { user, logout } = useAuth();
   const { currentStep, steps, prevStep, nextStep, locationName, canProceed, isPending } =
     usePondasiWorkspace();
 
@@ -28,28 +33,42 @@ export function DashboardHeader() {
   return (
     <header
       id="dashboard-header"
-      className="h-[64px] bg-surface border-b border-border px-6 flex items-center justify-between shrink-0 sticky top-0 z-40"
+      className="h-[64px] bg-surface border-b border-border px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-40 gap-3"
     >
-      <div className="min-w-0 flex items-center gap-3">
-        <nav className="flex items-center gap-1.5 text-sm min-w-0" aria-label="Breadcrumb">
-          <span className="font-mono text-[11px] text-ink-muted uppercase tracking-wide shrink-0">
-            Proyek
-          </span>
+      <div className="min-w-0 flex items-center gap-2 sm:gap-3">
+        <ProjectSwitcher activeProjectId={projectId ?? null} />
+        <div className="hidden sm:flex min-w-0 items-center gap-1.5 text-sm">
           <span className="text-border-strong shrink-0">/</span>
           <span
-            className="font-display font-semibold text-ink truncate max-w-[200px] sm:max-w-[320px] lg:max-w-[480px]"
+            className="font-display font-semibold text-ink truncate max-w-[140px] lg:max-w-[280px]"
             title={projectLabel}
           >
             {projectLabel}
           </span>
-          <span className="text-border-strong shrink-0 hidden sm:inline">/</span>
-          <span className="text-ink-secondary font-medium truncate hidden sm:inline">
+          <span className="text-border-strong shrink-0">/</span>
+          <span className="text-ink-secondary font-medium truncate">
             {STEP_SHORT[currentStep]}
           </span>
-        </nav>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+        {user ? (
+          <div className="hidden sm:flex items-center gap-2 mr-1">
+            <span className="text-xs text-ink-muted truncate max-w-[140px]" title={user.email}>
+              {user.name || user.email}
+            </span>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="p-2 rounded-lg border border-border text-ink-muted hover:text-ink hover:bg-surface-muted"
+              title="Keluar"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : null}
+
         {!isFirstStep && (
           <button
             type="button"

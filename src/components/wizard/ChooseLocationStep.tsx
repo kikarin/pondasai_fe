@@ -4,6 +4,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Loader2, LocateFixed, MapPin, RotateCcw, Search } from 'lucide-react';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
 import { DEFAULT_MAP_STYLE, isGoogleMapsUrl, resolveLocation, reverseGeocode } from '../../services/geocodeService';
+import { confirm } from '../../lib/confirm';
+import { toast } from 'sonner';
 
 export function ChooseLocationStep() {
   const {
@@ -213,16 +215,23 @@ export function ChooseLocationStep() {
   };
 
   const handleReset = async () => {
-    const confirmed = window.confirm(
-      'Reset proyek? Semua hasil analisis, denah, material, polygon, dan input tanah akan dihapus. Pin lokasi di peta tetap di posisi sekarang.',
-    );
+    const confirmed = await confirm({
+      title: 'Reset proyek',
+      message:
+        'Reset proyek? Semua hasil analisis, denah, material, polygon, dan input tanah akan dihapus. Pin lokasi di peta tetap di posisi sekarang.',
+      confirmLabel: 'Reset proyek',
+      tone: 'danger',
+    });
     if (!confirmed) return;
 
     setError(null);
     try {
       await resetWorkspace();
+      toast.success('Proyek direset');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal reset proyek');
+      const message = err instanceof Error ? err.message : 'Gagal reset proyek';
+      setError(message);
+      toast.error(message);
     }
   };
 

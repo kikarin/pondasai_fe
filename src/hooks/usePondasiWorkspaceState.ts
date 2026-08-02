@@ -10,6 +10,7 @@ import type {
   MaterialItem,
 } from '../types';
 import type { EarthquakeMagnitudeScenario, FloodScenarioCm } from '../types/scenario';
+import { useAuth } from '../context/AuthContext';
 import { analyzeDesign, analyzeSite } from '../services/analysisService';
 import { reverseGeocode } from '../services/geocodeService';
 import { getProject, resetProject, updateProject } from '../services/projectService';
@@ -107,6 +108,7 @@ function hydrateProjectState(
 }
 
 export function usePondasiWorkspaceState(projectId: string) {
+  const { canAccessBuildPath } = useAuth();
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [currentStep, setCurrentStep] = useState<StepId>('CHOOSE_LOCATION');
 
@@ -218,6 +220,38 @@ export function usePondasiWorkspaceState(projectId: string) {
           setAiExplanation,
           setBuildPathUnlocked,
         });
+
+        const needsSiteAnalysis =
+          Boolean(project.coordinates) &&
+          !project.siteAnalysis &&
+          (project.currentStep === 'SITE_ANALYSIS' || project.currentStep === 'CHOOSE_LOCATION');
+
+        if (needsSiteAnalysis && project.coordinates) {
+          setCurrentStep('SITE_ANALYSIS');
+          setLoadingKind('site');
+          setIsPending(true);
+          setLoadingStepIndex(0);
+          try {
+            const data = await analyzeSite(projectId);
+            if (!cancelled) {
+              setSiteAnalysis(data.siteAnalysis);
+              setLoadingStepIndex(SITE_LOADING_STEPS.length - 1);
+            }
+          } catch (error) {
+            if (!cancelled) {
+              setAnalysisError(
+                error instanceof Error ? error.message : 'Analisis risiko lokasi gagal',
+              );
+            }
+          } finally {
+            if (!cancelled) {
+              setTimeout(() => {
+                setIsPending(false);
+                setLoadingKind(null);
+              }, 400);
+            }
+          }
+        }
       } catch (error) {
         console.error('Gagal memuat proyek dari backend', error);
       } finally {
@@ -468,11 +502,12 @@ export function usePondasiWorkspaceState(projectId: string) {
   }, [syncProject]);
 
   const unlockBuildPath = useCallback(() => {
+    if (!canAccessBuildPath) return;
     setBuildPathUnlocked(true);
     const next: StepId = 'INPUT_LAND_DIMENSIONS';
     setCurrentStep(next);
     void syncProject(next);
-  }, [syncProject]);
+  }, [canAccessBuildPath, syncProject]);
 
   const funnelPhase = buildPathUnlocked ? 'build' : 'risk_only';
   const canProceed = canProceedFromStep(currentStep, validationContext);

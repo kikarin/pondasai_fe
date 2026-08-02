@@ -17,6 +17,8 @@ import {
 import { useEffect, useState, type ComponentType } from 'react';
 import { AppLogo } from './AppLogo';
 import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
+import { useAuth } from '../../context/AuthContext';
+import { PremiumUpsellModal } from '../billing/PremiumUpsellModal';
 import type { StepId } from '../../types';
 import { FASE_A_STEPS, FASE_B_STEPS } from '../../utils/stepValidation';
 
@@ -105,8 +107,9 @@ export function Sidebar() {
     isStepComplete,
     buildPathUnlocked,
   } = usePondasiWorkspace();
-
+  const { canAccessBuildPath } = useAuth();
   const [faseBOpen, setFaseBOpen] = useState(buildPathUnlocked || FASE_B_STEPS.includes(currentStep));
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   useEffect(() => {
     if (buildPathUnlocked || FASE_B_STEPS.includes(currentStep)) {
@@ -150,7 +153,13 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => {
-                if (buildPathUnlocked) setFaseBOpen((open) => !open);
+                if (buildPathUnlocked) {
+                  setFaseBOpen((open) => !open);
+                  return;
+                }
+                if (!canAccessBuildPath) {
+                  setUpsellOpen(true);
+                }
               }}
               className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left"
             >
@@ -169,7 +178,9 @@ export function Sidebar() {
 
             {!buildPathUnlocked ? (
               <p className="px-3 pb-1 text-[10px] text-[var(--color-warning)] opacity-90 leading-relaxed">
-                Terkunci — pilih Lanjut konsep rumah di hasil risiko.
+                {canAccessBuildPath
+                  ? 'Terkunci — pilih Lanjut konsep rumah di hasil risiko.'
+                  : 'Premium diperlukan — upgrade untuk membuka konsep rumah.'}
               </p>
             ) : null}
 
@@ -188,6 +199,7 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+      <PremiumUpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
     </aside>
   );
 }

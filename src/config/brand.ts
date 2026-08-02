@@ -8,9 +8,9 @@ export const APP_ICON_URL = iconUrl;
 export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://pondasai.id';
 
 export const DEFAULT_SEO = {
-  title: `${APP_NAME} — Analisis Risiko Banjir & Gempa untuk Rumah`,
+  title: `${APP_NAME} — Analisis Risiko Lahan sebelum Bangun Rumah`,
   description:
-    'pondasai membantu calon pemilik rumah menganalisis risiko banjir dan gempa, rekomendasi pondasi & struktur, denah 2D, material, dan laporan PDF — berbasis InaRISK BNPB dan rule engine deterministik.',
+    'Cek risiko banjir, gempa, dan multi-hazard di lahan Anda, lalu lanjut konsep rumah, denah, material, dan PDF — berbasis InaRISK BNPB & rule engine deterministik.',
   keywords: [
     'pondasai',
     'analisis banjir',
@@ -22,6 +22,7 @@ export const DEFAULT_SEO = {
     'denah rumah',
     'risiko bencana',
     'pra konstruksi',
+    'cek risiko lahan',
   ].join(', '),
   locale: 'id_ID',
 } as const;

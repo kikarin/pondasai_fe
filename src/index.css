@@ -176,3 +176,24 @@
   width: 100%;
   height: 100%;
 }
+.landing-hero-plane {
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(46, 94, 234, 0.18), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 70%, rgba(232, 98, 44, 0.1), transparent 50%),
+    linear-gradient(145deg, #e8eef8 0%, #f2f4f8 45%, #dce6f5 100%);
+  animation: landing-drift 18s ease-in-out infinite alternate;
+}
+
+.landing-hero-grid {
+  background-image:
+    linear-gradient(rgba(13, 26, 51, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 26, 51, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 80% at 75% 45%, black 20%, transparent 75%);
+  opacity: 0.9;
+}
+
+@keyframes landing-drift {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.04) translate(-1.5%, 1%); }
+}

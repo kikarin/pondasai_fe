@@ -5,6 +5,7 @@ import type {
   SiteAnalysisData,
   StructuralRecommendation,
 } from '../types';
+import { apiRequest } from './apiClient';
 
 export interface AnalysisResponse {
   siteAnalysis: SiteAnalysisData;
@@ -25,34 +26,26 @@ export interface DesignAnalysisResponse {
   aiExplanation: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
-
-async function postJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new Error(detail || `Request failed: ${response.status}`);
-  }
-
-  return response.json() as Promise<T>;
-}
-
 export async function analyzeSite(projectId: string): Promise<SiteAnalysisResponse> {
-  return postJson(`${API_BASE}/api/projects/${projectId}/analyze/site`);
+  return apiRequest<SiteAnalysisResponse>(`/api/projects/${projectId}/analyze/site`, {
+    method: 'POST',
+  });
 }
 
 export async function analyzeDesign(projectId: string): Promise<DesignAnalysisResponse> {
-  return postJson(`${API_BASE}/api/projects/${projectId}/analyze/design`);
+  return apiRequest<DesignAnalysisResponse>(`/api/projects/${projectId}/analyze/design`, {
+    method: 'POST',
+  });
 }
 
 export async function analyzeRisiko(projectId: string): Promise<RisikoResponse> {
-  return postJson(`${API_BASE}/api/projects/${projectId}/analyze/site/risiko`);
+  return apiRequest<RisikoResponse>(`/api/projects/${projectId}/analyze/site/risiko`, {
+    method: 'POST',
+  });
 }
 
 export async function analyzeProject(projectId: string): Promise<AnalysisResponse> {
-  return postJson(`${API_BASE}/api/projects/${projectId}/analyze`);
+  return apiRequest<AnalysisResponse>(`/api/projects/${projectId}/analyze`, {
+    method: 'POST',
+  });
 }

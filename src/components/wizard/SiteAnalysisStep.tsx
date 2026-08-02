@@ -36,6 +36,8 @@ import { usePondasiWorkspace } from '../../context/PondasiWorkspaceContext';
 import { analyzeRisiko } from '../../services/analysisService';
 import { ScenarioVisualizationPanel } from './ScenarioVisualizationPanel';
 import { FunnelGate } from './FunnelGate';
+import { useAuth } from '../../context/AuthContext';
+import { PremiumFeatureGate } from '../billing/PremiumFeatureGate';
 import {
   buildEarthquakeScenarioInputs,
   buildFloodScenarioInputs,
@@ -1517,12 +1519,14 @@ export function SiteAnalysisStep() {
     unlockBuildPath,
     coordinates,
   } = usePondasiWorkspace();
+  const { canAccessBuildPath } = useAuth();
   const coordsKey = `${Math.round(coordinates.lat * 100000)}:${Math.round(coordinates.lng * 100000)}`;
   const risiko = useRisiko(projectId, coordsKey);
 
   const handleContinue = useCallback(() => {
+    if (!canAccessBuildPath) return;
     unlockBuildPath();
-  }, [unlockBuildPath]);
+  }, [canAccessBuildPath, unlockBuildPath]);
 
   if (!siteAnalysis) {
     return (
@@ -1558,8 +1562,11 @@ export function SiteAnalysisStep() {
   const engine = siteAnalysis.riskEngine;
   const profile = siteAnalysis.siteProfile ?? engine?.siteProfile;
   const retryRequired = engine?.overall.retryRequired ?? false;
-  const risikoMap: Record<string, HazardRisikoEntry> | undefined = risiko.data?.risiko;
+  const risikoMap: Record<string, HazardRisikoEntry> | undefined = canAccessBuildPath
+    ? risiko.data?.risiko
+    : undefined;
   const mitigationItems = engine?.recommendation ?? [];
+  const premiumLocked = !canAccessBuildPath;
 
   const suitabilityBorderColor =
     suitability?.level === 'tidak_disarankan'
@@ -1678,17 +1685,31 @@ export function SiteAnalysisStep() {
         )}
 
         {engine ? (
-          <ScenarioVisualizationPanel
-            floodInputs={buildFloodScenarioInputs(engine, recommendations)}
-            earthquakeInputs={buildEarthquakeScenarioInputs(
-              engine,
-              recommendations,
-              history?.bmkgEarthquakes?.length ?? null,
-            )}
-          />
+          <PremiumFeatureGate
+            locked={premiumLocked}
+            title="Skenario Edukasi"
+            description="Diagram ilustratif banjir & gempa tersedia di Premium. Tidak mengubah skor kelayakan lokasi."
+          >
+            <ScenarioVisualizationPanel
+              floodInputs={buildFloodScenarioInputs(engine, recommendations)}
+              earthquakeInputs={buildEarthquakeScenarioInputs(
+                engine,
+                recommendations,
+                history?.bmkgEarthquakes?.length ?? null,
+              )}
+            />
+          </PremiumFeatureGate>
         ) : null}
 
-        {engine ? <LocationMitigationPanel items={mitigationItems} /> : null}
+        {engine ? (
+          <PremiumFeatureGate
+            locked={premiumLocked}
+            title="Mitigasi Lokasi"
+            description="Saran mitigasi dari Risk Engine untuk titik pin tersedia di Premium."
+          >
+            <LocationMitigationPanel items={mitigationItems} />
+          </PremiumFeatureGate>
+        ) : null}
 
         {engine ? <DesignConsiderationsSection engine={engine} /> : null}
 
@@ -1742,7 +1763,15 @@ export function SiteAnalysisStep() {
           />
         </div>
 
-        {engine ? <RisikoPanel risiko={risiko} /> : null}
+        {engine ? (
+          <PremiumFeatureGate
+            locked={premiumLocked}
+            title="Indeks Risiko (On-Demand)"
+            description="Layer risiko wilayah BNPB (on-demand) tersedia di Premium. Tidak memengaruhi skor kelayakan bangun."
+          >
+            <RisikoPanel risiko={risiko} />
+          </PremiumFeatureGate>
+        ) : null}
 
         <div className="rounded-2xl border border-border bg-surface-muted p-4">
           <p className="text-[10px] text-ink-muted leading-relaxed flex items-start gap-2">
@@ -1761,6 +1790,7 @@ export function SiteAnalysisStep() {
         <FunnelGate
           variant="full"
           buildPathUnlocked={buildPathUnlocked}
+          canAccessBuildPath={canAccessBuildPath}
           onContinue={handleContinue}
         />
       </div>
